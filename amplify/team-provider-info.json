@@ -1,0 +1,15 @@
+{
+  "staging": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-qrcodeitemborrower-staging-140123-authRole",
+      "UnauthRoleArn": "arn:aws:iam::040491481468:role/amplify-qrcodeitemborrower-staging-140123-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::040491481468:role/amplify-qrcodeitemborrower-staging-140123-authRole",
+      "Region": "ap-northeast-2",
+      "DeploymentBucketName": "amplify-qrcodeitemborrower-staging-140123-deployment",
+      "UnauthRoleName": "amplify-qrcodeitemborrower-staging-140123-unauthRole",
+      "StackName": "amplify-qrcodeitemborrower-staging-140123",
+      "StackId": "arn:aws:cloudformation:ap-northeast-2:040491481468:stack/amplify-qrcodeitemborrower-staging-140123/36c6a7e0-3691-11ed-ae86-0a49c4b4677a",
+      "AmplifyAppId": "dstyy8ylvtj4w"
+    }
+  }
+}
