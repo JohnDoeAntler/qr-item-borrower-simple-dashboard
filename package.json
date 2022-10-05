@@ -16,6 +16,7 @@
     "@types/react": "^18.0.21",
     "@types/react-dom": "^18.0.6",
     "aws-amplify": "^4.3.36",
+    "json2csv": "^5.0.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-qr-code": "^2.0.8",
@@ -46,5 +47,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@types/json2csv": "^5.0.3"
   }
 }

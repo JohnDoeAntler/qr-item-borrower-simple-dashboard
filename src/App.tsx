@@ -4,14 +4,16 @@ import Divider from '@mui/material/Divider';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import './App.css';
-import { Item } from './models';
-import { Button, createMuiTheme, ListItemButton, TextField } from '@mui/material';
+import { BorrowRecord, Item } from './models';
+import { Button, Dialog, DialogTitle, ListItemAvatar, ListItemButton, TextField } from '@mui/material';
 import styled from '@emotion/styled';
 import Box from '@mui/system/Box';
 import QRCode from "react-qr-code";
 import Snackbar from '@mui/material/Snackbar';
+import { Predicates } from 'aws-amplify';
+import { parse } from 'json2csv';
 
 const StyledTextField = styled(TextField)`
   .MuiInputBase-root {
@@ -38,7 +40,7 @@ const ItemListItem = (props: {
               >
                 {props.item.description}
               </Typography>
-              {" — is borrowed: " + !!props.item.record}
+              {" — is borrowed: " + !!props.item.record.some(e => e && !e.returnedAt)}
             </>
           }
         />
@@ -78,20 +80,14 @@ const App = () => {
   const [selectedItem, setSelectedItem] = useState<Item | undefined>();
   const [items, setItems] = useState<Item[]>([]);
   const [snackbar, setSnackBar] = useState('');
+  const [openHistory, setOpenHistory] = React.useState(false);
 
   useEffect(() => {
+
     DataStore.observeQuery(Item).subscribe((items) => {
-      if (items.isSynced) {
-        setItems(items.items);
-      }
-      console.log(`[Snapshot] item count: ${items.items.length}, isSynced: ${items.isSynced}`);
+      setItems(items.items);
     });
   }, []);
-
-  useEffect(() => {
-    console.log(items);
-    console.log(items.length);
-  }, [items]);
 
   const [inputName, setInputName] = useState('');
   const [inputDescription, setInputDescription] = useState<string | null | undefined>('');
@@ -113,6 +109,7 @@ const App = () => {
       new Item({
         name: inputName,
         description: inputDescription,
+        record: [],
       })
     );
 
@@ -165,6 +162,15 @@ const App = () => {
     setInputName(selectedItem.name);
     setInputDescription(selectedItem.description);
   }
+
+  const handleOpenHistory = () => {
+    setOpenHistory(true);
+  };
+
+  const handleCloseHistory = () => {
+    setOpenHistory(false);
+  };
+
 
   return (
     <div className="App" style={{
@@ -327,10 +333,67 @@ const App = () => {
             >
               Reset
             </Button>
+
+            <Button 
+              variant="contained"
+              color='info'
+              onClick={() => {
+                if (selectedItem) {
+                  console.log(parse(selectedItem));
+                }
+              }}
+            >
+              REPORT
+            </Button>
+
+            {
+              selectedItem?.record.filter(e => e).length ?
+              <>
+                <Button 
+                  variant="contained"
+                  color='info'
+                  onClick={handleOpenHistory}
+                >
+                  history
+                </Button>
+              
+                <SimpleHistoryDialog 
+                  open={openHistory}
+                  onClose={handleCloseHistory}
+                  record={selectedItem.record as BorrowRecord[]}
+                />
+              </>
+              : <></>
+            }
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+export interface SimpleDialogProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+const SimpleHistoryDialog = (props: SimpleDialogProps & {
+  record: BorrowRecord[];
+}) => {
+
+  return (
+    <Dialog open={props.open} onClose={props.onClose}>
+      <DialogTitle>Borrowing History of current item</DialogTitle>
+      <List sx={{ pt: 0 }}>
+        {props.record.filter(e => e).map((r) => (
+          <ListItem key={r.userId + r.borrowedAt}>
+            <ListItemText primary={`user ${r.username} (${r.userId}) borrowed this item at ${r.borrowedAt}${r.returnedAt ? ` returned this item at ${r.returnedAt}` : '.'}`} />
+          </ListItem>
+        )).reduce((a, b) => (a.length && [...a, (
+            <Divider variant="inset" />
+          ), b] || [b]) as any, [])}
+      </List>
+    </Dialog>
   );
 }
 
