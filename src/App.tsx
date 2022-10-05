@@ -7,13 +7,14 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import './App.css';
 import { BorrowRecord, Item } from './models';
-import { Button, Dialog, DialogTitle, ListItemAvatar, ListItemButton, TextField } from '@mui/material';
-import styled from '@emotion/styled';
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, FormGroup, ListItemAvatar, ListItemButton, Switch, TextField } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import Box from '@mui/system/Box';
 import QRCode from "react-qr-code";
 import Snackbar from '@mui/material/Snackbar';
 import { Predicates } from 'aws-amplify';
 import { parse } from 'json2csv';
+import flat from 'flat';
 
 const StyledTextField = styled(TextField)`
   .MuiInputBase-root {
@@ -21,6 +22,7 @@ const StyledTextField = styled(TextField)`
 		color: white;
   }
 `
+
 const ItemListItem = (props: {
   item: Item;
   onClick: () => void;
@@ -53,6 +55,7 @@ const EditableField = (props: {
   title: string;
   state: string;
   setState: (e: React.SetStateAction<string>) => void;
+  isStyled?: boolean,
 }) => {
   return (
     <>
@@ -60,13 +63,23 @@ const EditableField = (props: {
         {props.title}
       </Typography>
 
-      <StyledTextField
-        variant='filled'
-        label={props.title}
-        onChange={(e) => props.setState(e.currentTarget.value)}
-        value={props.state}
-        fullWidth
-      />
+      {
+        props.isStyled === true || props.isStyled === undefined ?
+        <StyledTextField
+          variant='filled'
+          label={props.title}
+          onChange={(e) => props.setState(e.currentTarget.value)}
+          value={props.state}
+          fullWidth
+        /> :
+        <TextField
+          variant='filled'
+          label={props.title}
+          onChange={(e) => props.setState(e.currentTarget.value)}
+          value={props.state}
+          fullWidth
+        />
+      }
 
       <Typography variant="caption" fontWeight={200} style={{ marginTop: '.25rem' }}>
         Consectetur adipisicing quis magna ullamco duis laborum occaecat elit.
@@ -81,6 +94,7 @@ const App = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [snackbar, setSnackBar] = useState('');
   const [openHistory, setOpenHistory] = React.useState(false);
+  const [openFollowup, setOpenFollowup] = React.useState(false);
 
   useEffect(() => {
 
@@ -171,6 +185,38 @@ const App = () => {
     setOpenHistory(false);
   };
 
+  const handleOpenFollowup = () => {
+    setOpenFollowup(true);
+  };
+
+  const handleCloseFollowup = (val: boolean) => {
+    if (val) {
+      setSnackBar('successfully updated the followup.');
+    }
+
+    setOpenFollowup(false);
+  };
+
+  const download = (content: string, fileName: string, mimeType: string): void => {
+    const a = document.createElement('a');
+    mimeType = mimeType || 'application/octet-stream';
+
+    if ((navigator as any).msSaveBlob) { // IE10
+      (navigator as any).msSaveBlob(new Blob([content], {
+        type: mimeType
+      }), fileName);
+    } else if (URL && 'download' in a) { //html5 A[download]
+      a.href = URL.createObjectURL(new Blob([content], {
+        type: mimeType
+      }));
+      a.setAttribute('download', fileName);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } else {
+      window.location.href = 'data:application/octet-stream,' + encodeURIComponent(content); // only this mime type is supported
+    }
+  }
 
   return (
     <div className="App" style={{
@@ -339,7 +385,7 @@ const App = () => {
               color='info'
               onClick={() => {
                 if (selectedItem) {
-                  console.log(parse(selectedItem));
+                  download(parse(flat(selectedItem) as any), 'report.csv', 'text/csv;encoding:utf-8');
                 }
               }}
             >
@@ -365,9 +411,32 @@ const App = () => {
               </>
               : <></>
             }
+
+            {
+              selectedItem ?
+              <>
+                <Button 
+                  variant="contained"
+                  color='info'
+                  onClick={handleOpenFollowup}
+                >
+                  Followup
+                </Button>
+              </> : <></>
+            }
           </div>
         </div>
       </div>
+
+      {
+        selectedItem ?
+        <FollowupDialog 
+          open={openFollowup}
+          onClose={handleCloseFollowup}
+          item={selectedItem}
+        /> :
+        <></>
+      }
     </div>
   );
 }
@@ -393,6 +462,253 @@ const SimpleHistoryDialog = (props: SimpleDialogProps & {
             <Divider variant="inset" />
           ), b] || [b]) as any, [])}
       </List>
+    </Dialog>
+  );
+}
+
+export interface FollowupDialogProps {
+  open: boolean;
+  item: Item;
+  onClose: (status: boolean) => void;
+}
+
+const FollowupDialog = (props: FollowupDialogProps) => {
+
+  const [assetNo, setAssetNo] = useState<string>('');
+  const [tagNumber, setTagNumber] = useState<string>('');
+  const [serialNumber, setSerialNumber] = useState<string>('');
+  const [modelNur, setModelNur] = useState<string>('');
+  const [taggable, setTaggable] = useState<boolean>(false);
+  const [category, setCategory] = useState<string>('');
+  const [subCategory, setSubCategory] = useState<string>('');
+  const [assetAdm, setAssetAdm] = useState<string>('');
+  const [maintBh, setMaintBh] = useState<string>('');
+  const [datePlaceInService, setDatePlaceInService] = useState<string>('');
+  const [assetCost, setAssetCost] = useState<number>(0);
+  const [department, setDepartment] = useState<string>('');
+  const [campus, setCampus] = useState<string>('');
+  const [block, setBlock] = useState<string>('');
+  const [floor, setFloor] = useState<string>('');
+  const [room, setRoom] = useState<string>('');
+  const [PONo, setPONo] = useState<string>('');
+  const [invoiceNo, setInvoiceNo] = useState<string>('');
+  const [projectCode, setProjectCode] = useState<string>('');
+  const [remarks, setRemarks] = useState<string>('');
+  useEffect(() => {
+    if (props.item) {
+      setAssetNo(props.item.followup?.assetNo || '');
+      setTagNumber(props.item.followup?.tagNumber || '');
+      setSerialNumber(props.item.followup?.serialNumber || '');
+      setModelNur(props.item.followup?.modelNur || '');
+      setTaggable(props.item.followup?.taggable || false);
+      setCategory(props.item.followup?.category || '');
+      setSubCategory(props.item.followup?.subCategory || '');
+      setAssetAdm(props.item.followup?.assetAdm || '');
+      setMaintBh(props.item.followup?.maintBh || '');
+      setDatePlaceInService(props.item.followup?.datePlaceInService || '');
+      setAssetCost(props.item.followup?.assetCost || 0);
+      setDepartment(props.item.followup?.department || '');
+      setCampus(props.item.followup?.campus || '');
+      setBlock(props.item.followup?.block || '');
+      setFloor(props.item.followup?.floor || '');
+      setRoom(props.item.followup?.room || '');
+      setPONo(props.item.followup?.PONo || '');
+      setInvoiceNo(props.item.followup?.invoiceNo || '');
+      setProjectCode(props.item.followup?.projectCode || '');
+      setRemarks(props.item.followup?.remarks || '');
+    }
+  }, [props.item]);
+  const onSubmit = async () => {
+    const item = await DataStore.save(
+      Item.copyOf(props.item, (item) => {
+        if (!item.followup) {
+          item.followup = {};
+        }
+        if (assetNo) item.followup.assetNo = assetNo;
+        if (tagNumber) item.followup.tagNumber = tagNumber;
+        if (serialNumber) item.followup.serialNumber = serialNumber;
+        if (modelNur) item.followup.modelNur = modelNur;
+        if (taggable) item.followup.taggable = taggable;
+        if (category) item.followup.category = category;
+        if (subCategory) item.followup.subCategory = subCategory;
+        if (assetAdm) item.followup.assetAdm = assetAdm;
+        if (maintBh) item.followup.maintBh = maintBh;
+        if (datePlaceInService) item.followup.datePlaceInService = datePlaceInService;
+        if (assetCost) item.followup.assetCost = assetCost;
+        if (department) item.followup.department = department;
+        if (campus) item.followup.campus = campus;
+        if (block) item.followup.block = block;
+        if (floor) item.followup.floor = floor;
+        if (room) item.followup.room = room;
+        if (PONo) item.followup.PONo = PONo;
+        if (invoiceNo) item.followup.invoiceNo = invoiceNo;
+        if (projectCode) item.followup.projectCode = projectCode;
+        if (remarks) item.followup.remarks = remarks;
+
+        return item;
+      })
+    );
+
+    props.onClose(true);
+  }
+
+  return (
+    <Dialog open={props.open} onClose={() => props.onClose(false)}>
+      <DialogTitle>Borrowing History of current item</DialogTitle>
+      <DialogContent>
+        <List sx={{ pt: 0 }} style={{ color: "black !important" }}>
+          <EditableField 
+            title="Asset No"
+            state={assetNo || ''}
+            setState={setAssetNo}
+            isStyled={false}
+          />
+          <EditableField
+            title="tagNumber"
+            state={tagNumber}
+            setState={setTagNumber}
+            isStyled={false}
+          />
+          <EditableField
+            title="serialNumber"
+            state={serialNumber}
+            setState={setSerialNumber}
+            isStyled={false}
+          />
+          <EditableField
+            title="modelNur"
+            state={modelNur}
+            setState={setModelNur}
+            isStyled={false}
+          />
+
+          <Typography variant="h4" fontWeight={700} style={{ marginBottom: '.5rem' }}>
+            Taggable
+          </Typography>
+
+          <FormGroup>
+            <FormControlLabel control={<Switch defaultChecked checked={taggable} onChange={(e) => setTaggable(e.target.checked)} />} label="Label" />
+          </FormGroup>
+
+          <Typography variant="caption" fontWeight={200} style={{ marginTop: '.25rem' }}>
+            Consectetur adipisicing quis magna ullamco duis laborum occaecat elit.
+          </Typography>
+
+          <EditableField
+            title="category"
+            state={category}
+            setState={setCategory}
+            isStyled={false}
+          />
+          <EditableField
+            title="subCategory"
+            state={subCategory}
+            setState={setSubCategory}
+            isStyled={false}
+          />
+          <EditableField
+            title="assetAdm"
+            state={assetAdm}
+            setState={setAssetAdm}
+            isStyled={false}
+          />
+          <EditableField
+            title="maintBh"
+            state={maintBh}
+            setState={setMaintBh}
+            isStyled={false}
+          />
+          <EditableField
+            title="datePlaceInService"
+            state={datePlaceInService}
+            setState={setDatePlaceInService}
+            isStyled={false}
+          />
+
+          <Typography variant="h4" fontWeight={700} style={{ marginBottom: '.5rem' }}>
+            Assets Cost
+          </Typography>
+
+          <TextField
+            type="number"
+            inputProps={{ inputMode: 'numeric' }}
+            variant='filled'
+            label="Asset Cost"
+            onChange={(e) => setAssetCost(parseFloat(e.currentTarget.value))}
+            value={assetCost}
+            fullWidth
+          />
+
+          <FormGroup>
+            <FormControlLabel control={<Switch defaultChecked />} label="Label" />
+          </FormGroup>
+
+          <Typography variant="caption" fontWeight={200} style={{ marginTop: '.25rem' }}>
+            Consectetur adipisicing quis magna ullamco duis laborum occaecat elit.
+          </Typography>
+
+          <EditableField
+            title="department"
+            state={department}
+            setState={setDepartment}
+            isStyled={false}
+          />
+          <EditableField
+            title="campus"
+            state={campus}
+            setState={setCampus}
+            isStyled={false}
+          />
+          <EditableField
+            title="block"
+            state={block}
+            setState={setBlock}
+            isStyled={false}
+          />
+          <EditableField
+            title="floor"
+            state={floor}
+            setState={setFloor}
+            isStyled={false}
+          />
+          <EditableField
+            title="room"
+            state={room}
+            setState={setRoom}
+            isStyled={false}
+          />
+          <EditableField
+            title="PONo"
+            state={PONo}
+            setState={setPONo}
+            isStyled={false}
+          />
+          <EditableField
+            title="invoiceNo"
+            state={invoiceNo}
+            setState={setInvoiceNo}
+            isStyled={false}
+          />
+          <EditableField
+            title="projectCode"
+            state={projectCode}
+            setState={setProjectCode}
+            isStyled={false}
+          />
+          <EditableField
+            title="remarks"
+            state={remarks}
+            setState={setRemarks}
+            isStyled={false}
+          />
+        </List>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => props.onClose(false)}>cancel</Button>
+        <Button onClick={onSubmit} autoFocus>
+          Update followup
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }
