@@ -184,13 +184,21 @@ const App = () => {
     setOpenHistory(false);
   };
 
-  const handleOpenFollowup = () => {
+  const handleOpenFollowup = async () => {
+    if (selectedItem) {
+      const latest = await DataStore.query(Item, selectedItem.id);
+      setSelectedItem(latest);
+    }
+
     setOpenFollowup(true);
   };
 
-  const handleCloseFollowup = (val: boolean) => {
+  const handleCloseFollowup = async (val: boolean) => {
     if (val) {
       setSnackBar('successfully updated the followup.');
+      if (selectedItem) {
+        setSelectedItem(await DataStore.query(Item, selectedItem.id));
+      }
     }
 
     setOpenFollowup(false);
@@ -495,6 +503,7 @@ const FollowupDialog = (props: FollowupDialogProps) => {
   const [invoiceNo, setInvoiceNo] = useState<string>('');
   const [projectCode, setProjectCode] = useState<string>('');
   const [remarks, setRemarks] = useState<string>('');
+
   useEffect(() => {
     if (props.item) {
       setAssetNo(props.item.followup?.assetNo || '');
@@ -519,32 +528,33 @@ const FollowupDialog = (props: FollowupDialogProps) => {
       setRemarks(props.item.followup?.remarks || '');
     }
   }, [props.item]);
+
   const onSubmit = async () => {
     const item = await DataStore.save(
       Item.copyOf(props.item, (item) => {
         if (!item.followup) {
           item.followup = {};
         }
-        if (assetNo) item.followup.assetNo = assetNo;
-        if (tagNumber) item.followup.tagNumber = tagNumber;
-        if (serialNumber) item.followup.serialNumber = serialNumber;
-        if (modelNur) item.followup.modelNur = modelNur;
-        if (taggable) item.followup.taggable = taggable;
-        if (category) item.followup.category = category;
-        if (subCategory) item.followup.subCategory = subCategory;
-        if (assetAdm) item.followup.assetAdm = assetAdm;
-        if (maintBh) item.followup.maintBh = maintBh;
-        if (datePlaceInService) item.followup.datePlaceInService = datePlaceInService;
-        if (assetCost) item.followup.assetCost = assetCost;
-        if (department) item.followup.department = department;
-        if (campus) item.followup.campus = campus;
-        if (block) item.followup.block = block;
-        if (floor) item.followup.floor = floor;
-        if (room) item.followup.room = room;
-        if (PONo) item.followup.PONo = PONo;
-        if (invoiceNo) item.followup.invoiceNo = invoiceNo;
-        if (projectCode) item.followup.projectCode = projectCode;
-        if (remarks) item.followup.remarks = remarks;
+        if (typeof assetNo === 'string' || assetNo) item.followup.assetNo = assetNo;
+        if (typeof tagNumber === 'string' || tagNumber) item.followup.tagNumber = tagNumber;
+        if (typeof serialNumber === 'string' || serialNumber) item.followup.serialNumber = serialNumber;
+        if (typeof modelNur === 'string' || modelNur) item.followup.modelNur = modelNur;
+        if (typeof taggable === 'boolean' || taggable) item.followup.taggable = taggable;
+        if (typeof category === 'string' || category) item.followup.category = category;
+        if (typeof subCategory === 'string' || subCategory) item.followup.subCategory = subCategory;
+        if (typeof assetAdm === 'string' || assetAdm) item.followup.assetAdm = assetAdm;
+        if (typeof maintBh === 'string' || maintBh) item.followup.maintBh = maintBh;
+        if (typeof datePlaceInService === 'string' || datePlaceInService) item.followup.datePlaceInService = datePlaceInService;
+        if (typeof assetCost === 'number' || assetCost) item.followup.assetCost = assetCost;
+        if (typeof department === 'string' || department) item.followup.department = department;
+        if (typeof campus === 'string' || campus) item.followup.campus = campus;
+        if (typeof block === 'string' || block) item.followup.block = block;
+        if (typeof floor === 'string' || floor) item.followup.floor = floor;
+        if (typeof room === 'string' || room) item.followup.room = room;
+        if (typeof PONo === 'string' || PONo) item.followup.PONo = PONo;
+        if (typeof invoiceNo === 'string' || invoiceNo) item.followup.invoiceNo = invoiceNo;
+        if (typeof projectCode === 'string' || projectCode) item.followup.projectCode = projectCode;
+        if (typeof remarks === 'string' || remarks) item.followup.remarks = remarks;
 
         return item;
       })
@@ -639,10 +649,6 @@ const FollowupDialog = (props: FollowupDialogProps) => {
             value={assetCost}
             fullWidth
           />
-
-          <FormGroup>
-            <FormControlLabel control={<Switch defaultChecked />} label="Label" />
-          </FormGroup>
 
           <Typography variant="caption" fontWeight={200} style={{ marginTop: '.25rem' }}>
             Consectetur adipisicing quis magna ullamco duis laborum occaecat elit.
