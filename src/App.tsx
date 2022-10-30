@@ -157,7 +157,7 @@ const App = () => {
       return;
     }
     
-    if (selectedItem.record) {
+    if (!!selectedItem.record.some(e => e && !e.returnedAt)) {
       setSnackBar('invalid operation: to-be deleted item could not be borrowed.');
       return;
     }
