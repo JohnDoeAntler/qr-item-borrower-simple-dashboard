@@ -97,7 +97,6 @@ const App = () => {
   const [openFollowup, setOpenFollowup] = React.useState(false);
 
   useEffect(() => {
-
     DataStore.observeQuery(Item).subscribe((items) => {
       setItems(items.items);
     });
@@ -383,9 +382,11 @@ const App = () => {
             <Button 
               variant="contained"
               color='info'
-              onClick={() => {
+              onClick={async () => {
                 if (selectedItem) {
-                  download(parse(flat(selectedItem) as any), 'report.csv', 'text/csv;encoding:utf-8');
+                  const latest = await DataStore.query(Item, selectedItem.id);
+
+                  download(parse(flat(latest) as any), 'report.csv', 'text/csv;encoding:utf-8');
                 }
               }}
             >
