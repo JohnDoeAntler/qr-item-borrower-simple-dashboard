@@ -247,22 +247,42 @@ const App = () => {
         justifyContent: 'space-between',
         columnGap: '2rem',
       }}>
-        <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'rgba(256, 256, 256, 40%)', borderRadius: '.5rem', maxHeight: '80vh', overflow: 'auto', }}>
-          {
-            items.map(e => (
-              <ItemListItem item={e} onClick={() => setSelectedItem(e)} />
-            )).reduce((a, b) => (a.length && [...a, (
-              <Divider variant="inset" />
-            ), b] || [b]) as any, []) as any
-          }
-        </List>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            rowGap: '1rem',
+            flex: 1,
+          }}
+        >
+          <Button 
+            variant="contained"
+            color='info'
+            onClick={async () => {
+              const fields = [ 'id', 'name', 'description', 'followup.assetNo', 'followup.tagNumber', 'followup.serialNumber', 'followup.modelNur', 'followup.taggable', 'followup.category', 'followup.subCategory', 'followup.assetAdm', 'followup.maintBh', 'followup.datePlaceInService', 'followup.assetCost', 'followup.department', 'followup.campus', 'followup.block', 'followup.floor', 'followup.room', 'followup.PONo', 'followup.invoiceNo', 'followup.projectCode', 'followup.remarks', 'createdAt', 'updatedAt', 'isLoaned' ];
+              download(parse(items.map(e => ({...flat(e) as any, isLoaned: !!e?.record.some(e => e && !e.returnedAt) })) as any, { fields }), 'report.csv', 'text/csv;encoding:utf-8');
+            }}
+          >
+            REPORT
+          </Button>
+
+          <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'rgba(256, 256, 256, 40%)', borderRadius: '.5rem', maxHeight: '80vh', overflow: 'auto', }}>
+            {
+              items.map(e => (
+                <ItemListItem key={e.id} item={e} onClick={() => setSelectedItem(e)} />
+              )).reduce((a, b, i) => (a.length && [...a, (
+                <Divider key={i} variant="inset" />
+              ), b] || [b]) as any, []) as any
+            }
+          </List>
+        </div>
 
         <div style={{
           display: 'flex',
           flexDirection: 'column',
-          width: '100%',
           alignItems: 'start',
-          color: 'white'
+          color: 'white',
+          flex: 3,
         }}>
           <Typography variant="h2" fontWeight={900}>
             Item panel
@@ -386,21 +406,6 @@ const App = () => {
             >
               Reset
             </Button>
-
-            <Button 
-              variant="contained"
-              color='info'
-              onClick={async () => {
-                if (selectedItem) {
-                  const latest = await DataStore.query(Item, selectedItem.id);
-
-                  download(parse(flat(latest) as any), 'report.csv', 'text/csv;encoding:utf-8');
-                }
-              }}
-            >
-              REPORT
-            </Button>
-
             {
               selectedItem?.record.filter(e => e).length ?
               <>

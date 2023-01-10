@@ -1,0 +1,38 @@
+type Followup {
+  assetNo: String
+  tagNumber: String
+  serialNumber: String
+  modelNur: String
+  taggable: Boolean
+  category: String
+  subCategory: String
+  assetAdm: String
+  maintBh: String
+  datePlaceInService: AWSDateTime
+  assetCost: Float
+  department: String
+  campus: String
+  block: String
+  floor: String
+  room: String
+  PONo: String
+  invoiceNo: String
+  projectCode: String
+  remarks: String
+}
+
+type BorrowRecord {
+  userId: String!
+  username: String!
+  borrowedAt: AWSDateTime!
+  returnedAt: AWSDateTime
+}
+
+type Item @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  name: String!
+  description: String
+  record: [BorrowRecord]!
+  followup: Followup
+}
+ 
