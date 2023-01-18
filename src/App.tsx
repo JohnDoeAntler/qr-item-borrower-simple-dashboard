@@ -259,7 +259,7 @@ const App = () => {
             variant="contained"
             color='info'
             onClick={async () => {
-              const fields = [ 'id', 'name', 'description', 'followup.assetNo', 'followup.tagNumber', 'followup.serialNumber', 'followup.modelNur', 'followup.taggable', 'followup.category', 'followup.subCategory', 'followup.assetAdm', 'followup.maintBh', 'followup.datePlaceInService', 'followup.assetCost', 'followup.department', 'followup.campus', 'followup.block', 'followup.floor', 'followup.room', 'followup.PONo', 'followup.invoiceNo', 'followup.projectCode', 'followup.remarks', 'createdAt', 'updatedAt', 'isLoaned' ];
+              const fields = ['isLoaned', 'name', 'description', 'followup.assetNo', 'followup.tagNumber', 'followup.serialNumber', 'followup.modelNur', 'followup.taggable', 'followup.category', 'followup.subCategory', 'followup.assetAdm', 'followup.maintBh', 'followup.datePlaceInService', 'followup.assetCost', 'followup.department', 'followup.campus', 'followup.block', 'followup.floor', 'followup.room', 'followup.PONo', 'followup.invoiceNo', 'followup.projectCode', 'followup.remarks', 'createdAt', 'updatedAt'];
               download(parse(items.map(e => ({...flat(e) as any, isLoaned: !!e?.record.some(e => e && !e.returnedAt) })) as any, { fields }), 'report.csv', 'text/csv;encoding:utf-8');
             }}
           >
