@@ -6,7 +6,7 @@ import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import './App.css';
-import { BorrowRecord, Item } from './models';
+import { BorrowRecord, EagerItem, Item } from './models';
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, FormGroup, ListItemAvatar, ListItemButton, Switch, TextField } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import Box from '@mui/system/Box';
@@ -259,8 +259,9 @@ const App = () => {
             variant="contained"
             color='info'
             onClick={async () => {
-              const fields = ['isLoaned', 'name', 'description', 'followup.assetNo', 'followup.tagNumber', 'followup.serialNumber', 'followup.modelNur', 'followup.taggable', 'followup.category', 'followup.subCategory', 'followup.assetAdm', 'followup.maintBh', 'followup.datePlaceInService', 'followup.assetCost', 'followup.department', 'followup.campus', 'followup.block', 'followup.floor', 'followup.room', 'followup.PONo', 'followup.invoiceNo', 'followup.projectCode', 'followup.remarks', 'createdAt', 'updatedAt'];
-              download(parse(items.map(e => ({...flat(e) as any, isLoaned: !!e?.record.some(e => e && !e.returnedAt) })) as any, { fields }), 'report.csv', 'text/csv;encoding:utf-8');
+              const fields = ['isLoaned', 'loanerName', 'name', 'description', 'followup.assetNo', 'followup.tagNumber', 'followup.serialNumber', 'followup.modelNur', 'followup.taggable', 'followup.category', 'followup.subCategory', 'followup.assetAdm', 'followup.maintBh', 'followup.datePlaceInService', 'followup.assetCost', 'followup.department', 'followup.campus', 'followup.block', 'followup.floor', 'followup.room', 'followup.PONo', 'followup.invoiceNo', 'followup.projectCode', 'followup.remarks', 'createdAt', 'updatedAt'];
+              const f = (e: EagerItem) => !!e?.record.some(e => e && !e.returnedAt);
+              download(parse(items.map(e => ({...flat(e) as any, isLoaned: f(e), loanerName: f(e) ? e.record.find(e => !e?.returnedAt)?.username : 'N/A' })) as any, { fields }), 'report.csv', 'text/csv;encoding:utf-8');
             }}
           >
             REPORT
